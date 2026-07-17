@@ -75,6 +75,17 @@ export default function Footer() {
           </a>
           .
         </p>
+        <p className="site-footer__support">
+          Enjoying the game? You can{' '}
+          <a
+            href="https://ko-fi.com/incompletebiped"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="site-footer__kofi"
+          >
+            ☕ Buy Me a Coffee
+          </a>
+        </p>
       </div>
     </footer>
   );
