@@ -22,6 +22,14 @@ If you enjoy the game, please support the original: buy the physical card game f
 
 ---
 
+## ☕ Support this project
+
+This is a free, non-commercial fan project. If you're enjoying the digital version and want to help cover hosting and development, you can **[Buy Me a Coffee on Ko-fi](https://ko-fi.com/incompletebiped)**. Every bit is appreciated — thank you!
+
+[![Buy Me a Coffee](https://img.shields.io/badge/Ko--fi-Buy%20Me%20a%20Coffee-e8b923?logo=ko-fi&logoColor=white)](https://ko-fi.com/incompletebiped)
+
+---
+
 ## Setup
 
 1. **Install dependencies**
