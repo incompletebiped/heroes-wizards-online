@@ -7,7 +7,7 @@ import { useLeaveGame } from '@/context/LeaveGameContext';
 import { useLobby } from '@/context/LobbyContext';
 import { useOnlineGame } from '@/context/OnlineGameContext';
 import { getLegalActions } from '@/engine/validation';
-import { leaveLobby as leaveLobbySupabase } from '@/lib/lobby';
+import { leaveLobby as leaveServerLobby } from '@/lib/lobby';
 import StartScreen from '@/components/StartScreen';
 import GameScreen from '@/components/GameScreen';
 import WinScreen from '@/components/WinScreen';
@@ -27,7 +27,7 @@ export default function GameWrapper() {
     if (online.gameState) {
       await online.notifyPlayerLeftAndLeave();
       if (lobby?.lobbyId && lobby?.playerId) {
-        await leaveLobbySupabase(lobby.lobbyId, lobby.playerId);
+        await leaveServerLobby(lobby.lobbyId, lobby.playerId);
       }
       leaveLobby();
       router.replace('/?mode=online');

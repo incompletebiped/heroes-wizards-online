@@ -8,7 +8,7 @@ import { useLobby } from '@/context/LobbyContext';
 import { useOnlineGame } from '@/context/OnlineGameContext';
 import PlayerAvatarIcon from './PlayerAvatarIcon';
 import { MAX_PLAYERS } from '@/data/constants';
-import { leaveLobby as leaveLobbySupabase } from '@/lib/lobby';
+import { leaveLobby as leaveServerLobby } from '@/lib/lobby';
 import { createGame } from '@/engine/setup';
 
 interface LobbyScreenProps {
@@ -24,7 +24,7 @@ export default function LobbyScreen({ onStartGame }: LobbyScreenProps) {
 
   const handleLeaveLobby = useCallback(async () => {
     if (lobby?.lobbyId && lobby?.playerId) {
-      await leaveLobbySupabase(lobby.lobbyId, lobby.playerId);
+      await leaveServerLobby(lobby.lobbyId, lobby.playerId);
     }
     leaveLobby();
     router.replace('/?mode=online');
@@ -33,7 +33,7 @@ export default function LobbyScreen({ onStartGame }: LobbyScreenProps) {
   /** Go back to main start screen (clear lobby + online game, then navigate). */
   const goToStart = useCallback(async () => {
     if (lobby?.lobbyId && lobby?.playerId) {
-      await leaveLobbySupabase(lobby.lobbyId, lobby.playerId);
+      await leaveServerLobby(lobby.lobbyId, lobby.playerId);
     }
     leaveLobby();
     leaveOnlineGame();

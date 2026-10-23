@@ -18,7 +18,7 @@ import {
   persistLobbyForReconnect,
   clearPersistedLobby,
 } from '@/lib/lobby';
-import { isSupabaseConfigured } from '@/lib/supabase';
+import { isRealtimeConfigured } from '@/lib/realtime';
 
 export interface LobbyPlayer {
   id: string;
@@ -31,9 +31,9 @@ export interface LobbyState {
   playerName: string;
   isHost: boolean;
   players: LobbyPlayer[];
-  /** Set when using Supabase; used for Realtime and leave. */
+  /** Set for server-backed online lobbies (same as lobbyCode); used for realtime and leave. */
   lobbyId?: string;
-  /** This client's row id in lobby_players; used for leave. */
+  /** This client's player id in the server lobby; used for realtime and leave. */
   playerId?: string;
 }
 
@@ -91,7 +91,7 @@ export function LobbyProvider({ children }: { children: ReactNode }) {
 
   // Restore lobby from sessionStorage on load (reconnection)
   useEffect(() => {
-    if (!isSupabaseConfigured() || hasRestoredRef.current) return;
+    if (!isRealtimeConfigured() || hasRestoredRef.current) return;
     hasRestoredRef.current = true;
     const persisted = getPersistedLobby();
     if (!persisted) return;
@@ -125,14 +125,14 @@ export function LobbyProvider({ children }: { children: ReactNode }) {
     }
   }, [lobby?.lobbyId, lobby?.playerId, lobby?.playerName, lobby]);
 
-  // Subscribe to Supabase Realtime when we have a lobby with lobbyId
+  // Subscribe to player-list updates when we have a server lobby
   useEffect(() => {
-    if (!isSupabaseConfigured() || !lobby?.lobbyId) return;
-    const unsubscribe = subscribeToLobbyPlayers(lobby.lobbyId, (players) => {
+    if (!isRealtimeConfigured() || !lobby?.lobbyId || !lobby.playerId) return;
+    const unsubscribe = subscribeToLobbyPlayers(lobby.lobbyId, lobby.playerId, (players) => {
       setLobbyState((prev) => (prev ? { ...prev, players } : null));
     });
     return unsubscribe;
-  }, [lobby?.lobbyId]);
+  }, [lobby?.lobbyId, lobby?.playerId]);
 
   const value = useMemo(
     () => ({ lobby, setLobby, leaveLobby, generateLobbyCode }),

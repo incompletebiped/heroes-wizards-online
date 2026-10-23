@@ -411,6 +411,8 @@ export function playerLeft(
     next = advanceTurn(next);
     next = advanceTurnPastInactive(next);
   }
+  // 2 players + disconnect: keep the game open for the grace period (host ends it via endGameDueToDisconnect).
+  if (n <= 2 && reason === 'disconnect') return next;
   const activeIndices = getActivePlayerIndices(next);
   if (activeIndices.length === 1) {
     return {
