@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Heroes & Wizards is a fan-made web app for playing the card game "Heroes & Wizards" in the browser. Built with Next.js 14 (App Router) and deployed on Vercel. Supports local hot-seat play (2-5 players, same device) and online multiplayer via Supabase Realtime.
+Heroes & Wizards is a fan-made web app for playing the card game "Heroes & Wizards" in the browser. Built with Next.js 14 (App Router) and deployed on Vercel. Supports local hot-seat play (2-5 players, same device) and online multiplayer via a Cloudflare Worker (`realtime/`).
 
 ## Commands
 
@@ -42,13 +42,14 @@ The core pattern: **pure game logic in `src/engine/`** is completely decoupled f
   - `OnlineGameContext` — host-authoritative game sync
   - `LeaveGameContext` — leave game confirmation
 
-### Multiplayer (Supabase Realtime)
+### Multiplayer (Cloudflare Worker + Durable Objects)
 
-Host-authoritative model in `src/lib/gameSync.ts`:
-- Host applies actions locally and broadcasts state
-- Clients send action requests, wait for host broadcast
-- Channel: `game:{lobbyId}` broadcast
-- Features: host migration, disconnect detection (3-min grace), session reconnection, presence tracking
+`realtime/` is a separate Cloudflare Worker (own `package.json`, deployed with `npm run deploy` there). One Durable Object per lobby code stores the player list and relays WebSocket messages; it never runs the engine. See `REALTIME_SETUP.md`.
+
+- `src/lib/realtime.ts` — HTTP client + shared, auto-reconnecting `RoomConnection` (one socket per lobby, ref-counted)
+- `src/lib/lobby.ts` — create/join/leave/reconnect; `lobbyId` is the 4-letter lobby code
+- `src/lib/gameSync.ts` — host-authoritative sync: host applies actions locally and broadcasts state; clients send actions and wait for the host's broadcast
+- Features: host migration, disconnect detection via presence (3-min grace), session reconnection, re-sync after a socket drop
 
 ### Component Hierarchy
 
@@ -69,17 +70,14 @@ Components are presentation-only — callbacks like `onDraw`, `onPlayCard` etc. 
 
 ### Deployment
 
-Hosted on Vercel. `vercel.json` configures two cron jobs: daily lobby cleanup (`/api/cron/cleanup-lobbies`) and a heartbeat every 3 days (`/api/cron/heartbeat`). Both are API route handlers in `src/app/api/cron/`.
+Next.js app on Vercel; realtime worker on Cloudflare (`cd realtime && npm run deploy`). Lobbies expire on their own via Durable Object alarms, so there are no cron jobs.
 
 ## Environment Variables
 
-For online multiplayer, copy `.env.local.example` → `.env.local` and set Supabase keys. See `SUPABASE_SETUP.md` for table creation SQL.
+For online multiplayer, set the realtime worker URL in `.env.local` (and in Vercel). See `REALTIME_SETUP.md`.
 
 ```
-NEXT_PUBLIC_SUPABASE_URL
-NEXT_PUBLIC_SUPABASE_ANON_KEY
-SUPABASE_SERVICE_ROLE_KEY   # optional, for cron cleanup
-CRON_SECRET                 # optional, for cron cleanup
+NEXT_PUBLIC_REALTIME_URL    # e.g. http://127.0.0.1:8787 locally, or the workers.dev URL
 ```
 `````
 testing: GitShift 
