@@ -152,6 +152,31 @@ body {
   text-decoration: underline;
 }
 
+.site-footer__support {
+  font-size: 0.9rem;
+  color: white;
+  margin: 0;
+}
+
+.site-footer__kofi {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-left: 0.25rem;
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  background: var(--highlight);
+  color: var(--bg-dark);
+  font-weight: 700;
+  text-decoration: none;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.site-footer__kofi:hover {
+  background: #f2c94c;
+  transform: translateY(-1px);
+}
+
 /* ----- Static pages (How to Play, Disclaimer) ----- */
 .static-page {
   display: flex;
