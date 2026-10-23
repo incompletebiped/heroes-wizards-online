@@ -15,8 +15,8 @@ import { subscribeToGameChannel, broadcastGameStart, broadcastGameState, broadca
 import type { GameState } from '@/engine/state';
 import { playerLeft, playerReconnected, DISCONNECT_GRACE_PERIOD_MS } from '@/engine/actions';
 import { getActivePlayerIndices } from '@/engine/events';
-import type { GameAction } from '@/lib/gameSync';
-import { isSupabaseConfigured } from '@/lib/supabase';
+import type { GameAction, GameChannel } from '@/lib/gameSync';
+import { isRealtimeConfigured } from '@/lib/realtime';
 
 export interface OnlineGameContextValue {
   /** Game state from host (game_start) or subsequent game_state broadcasts. */
@@ -104,7 +104,7 @@ export function OnlineGameProvider({ children }: { children: ReactNode }) {
     return idx >= 0 ? idx : -1;
   }, [playerId, playerOrder]);
 
-  const gameChannelRef = useRef<{ send: (args: object) => Promise<unknown>; track?: (payload: Record<string, unknown>) => void } | null>(null);
+  const gameChannelRef = useRef<GameChannel | null>(null);
   const isGameHostRef = useRef(false);
   const declarationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const drawDeclarationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -282,9 +282,9 @@ export function OnlineGameProvider({ children }: { children: ReactNode }) {
 
   // Subscribe to game channel when in a lobby (both host and clients)
   useEffect(() => {
-    if (!isSupabaseConfigured() || !lobbyId || !playerId) return;
+    if (!isRealtimeConfigured() || !lobbyId || !playerId) return;
 
-    const unsubscribe = subscribeToGameChannel(lobbyId, {
+    const unsubscribe = subscribeToGameChannel(lobbyId, playerId, {
       onGameStart: (payload) => {
         setGameState(payload.state);
         setPlayerOrder(payload.playerOrder);
@@ -481,6 +481,13 @@ export function OnlineGameProvider({ children }: { children: ReactNode }) {
         if (!isGameHostRef.current) return;
         const current = gameStateRef.current;
         if (current) broadcastGameState(lobbyId, current, gameChannelRef.current, playerOrderRef.current);
+      },
+      onReconnected: () => {
+        // Broadcasts sent while our socket was down were missed: host re-sends state, clients ask for it.
+        const current = gameStateRef.current;
+        if (!current) return;
+        if (isGameHostRef.current) broadcastGameState(lobbyId, current, gameChannelRef.current, playerOrderRef.current);
+        else broadcastRequestState(lobbyId, playerId, gameChannelRef.current);
       },
       channelRef: gameChannelRef,
     });

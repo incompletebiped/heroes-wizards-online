@@ -7,7 +7,7 @@ import { useLeaveGame } from '@/context/LeaveGameContext';
 import { useLobby } from '@/context/LobbyContext';
 import { useOnlineGame } from '@/context/OnlineGameContext';
 import { createLobby, joinLobby } from '@/lib/lobby';
-import { isSupabaseConfigured } from '@/lib/supabase';
+import { isRealtimeConfigured } from '@/lib/realtime';
 import { getRandomThemedName } from '@/utils/themedNames';
 
 const NAME_MAX_LENGTH = 20;
@@ -58,7 +58,7 @@ export default function OnlineSetupScreen({ onGoToStart }: OnlineSetupScreenProp
     const name = createName.trim() || 'Player';
 
     try {
-      if (isSupabaseConfigured()) {
+      if (isRealtimeConfigured()) {
         const result = await createLobby(name);
         if ('error' in result) {
           setCreateError(result.error);
@@ -105,7 +105,7 @@ export default function OnlineSetupScreen({ onGoToStart }: OnlineSetupScreenProp
       return;
     }
 
-    if (isSupabaseConfigured()) {
+    if (isRealtimeConfigured()) {
       const result = await joinLobby(code, name);
       setLoading(false);
       if ('error' in result) {
